@@ -6,7 +6,7 @@ import Checkout from "./pages/Checkout.jsx";
 import OrderConfirmation from "./pages/OrderConfirmation.jsx";
 import Admin from "./pages/Admin.jsx";
 import ScrollToTop from "./components/ScrollToTop.jsx";
-import { useMenuStore } from "./store/menuStore.js";
+import { useMenuStore, BRAND_COLORS } from "./store/menuStore.js";
 import { useCartStore } from "./store/cartStore.js";
 import { useOrdersStore } from "./store/ordersStore.js";
 
@@ -17,6 +17,17 @@ const STORE_KEYS = {
 };
 
 export default function App() {
+  const brandColor = useMenuStore((s) => s.brandColor);
+
+  // Apply brand color CSS variables to :root
+  useEffect(() => {
+    const palette = BRAND_COLORS.find((c) => c.id === brandColor) || BRAND_COLORS[0];
+    const root = document.documentElement.style;
+    root.setProperty("--primary", palette.primary);
+    root.setProperty("--primary-foreground", palette.foreground);
+    root.setProperty("--ring", palette.ring);
+  }, [brandColor]);
+
   // Cross-tab sync: when another tab writes to localStorage, rehydrate.
   useEffect(() => {
     const handler = (e) => {

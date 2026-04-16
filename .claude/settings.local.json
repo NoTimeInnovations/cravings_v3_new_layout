@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(wc -l src/store/*.js src/pages/*.jsx)",
+      "Bash(npx vite:*)"
+    ]
+  }
+}

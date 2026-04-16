@@ -9,6 +9,20 @@ import {
 const uid = (prefix) =>
   `${prefix}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
 
+// 10 premium brand color palettes — HSL values for --primary, --primary-foreground, --ring
+export const BRAND_COLORS = [
+  { id: "burnt-orange",    name: "Burnt Orange",    hex: "#e85d04", primary: "16 100% 50%",   ring: "16 100% 50%",   foreground: "60 9.1% 97.8%" },
+  { id: "obsidian-gold",   name: "Obsidian Gold",   hex: "#b8860b", primary: "38 85% 38%",    ring: "38 85% 38%",    foreground: "60 9.1% 97.8%" },
+  { id: "royal-burgundy",  name: "Royal Burgundy",  hex: "#8b1a4a", primary: "335 70% 33%",   ring: "335 70% 33%",   foreground: "60 9.1% 97.8%" },
+  { id: "midnight-emerald",name: "Midnight Emerald",hex: "#0d6b4e", primary: "160 78% 24%",   ring: "160 78% 24%",   foreground: "60 9.1% 97.8%" },
+  { id: "sapphire",        name: "Sapphire",        hex: "#1e4db7", primary: "222 72% 42%",   ring: "222 72% 42%",   foreground: "60 9.1% 97.8%" },
+  { id: "charcoal-noir",   name: "Charcoal Noir",   hex: "#2c2c2c", primary: "0 0% 17%",      ring: "0 0% 17%",      foreground: "60 9.1% 97.8%" },
+  { id: "deep-violet",     name: "Deep Violet",     hex: "#6b21a8", primary: "272 68% 40%",   ring: "272 68% 40%",   foreground: "60 9.1% 97.8%" },
+  { id: "rose-blush",      name: "Rose Blush",      hex: "#be185d", primary: "338 76% 42%",   ring: "338 76% 42%",   foreground: "60 9.1% 97.8%" },
+  { id: "teal-luxe",       name: "Teal Luxe",       hex: "#0f766e", primary: "176 78% 26%",   ring: "176 78% 26%",   foreground: "60 9.1% 97.8%" },
+  { id: "warm-copper",     name: "Warm Copper",     hex: "#b45309", primary: "28 88% 37%",    ring: "28 88% 37%",    foreground: "60 9.1% 97.8%" },
+];
+
 export const GRADIENTS = [
   "from-amber-200 via-orange-200 to-rose-200",
   "from-yellow-200 via-amber-200 to-orange-300",
@@ -74,14 +88,16 @@ export const useMenuStore = create(
       items: seedMenuWithAvailability,
       outlets: seedOutlets,
       menuLayout: 1, // 1 = detailed list, 2 = compact grid, 3 = photo grid
+      brandColor: "burnt-orange", // id from BRAND_COLORS
       banners: [
         // type: 'offer' | 'announcement'
         // offers: { id, type:'offer', name, description, code, validDays }
         // announcements: { id, type:'announcement', name, description }
       ],
 
-      // Layout
+      // Layout & Brand Color
       setMenuLayout: (layout) => set({ menuLayout: layout }),
+      setBrandColor: (colorId) => set({ brandColor: colorId }),
 
       // Banners
       addBanner: (banner) =>
@@ -222,6 +238,7 @@ export const useMenuStore = create(
           items: seedMenuWithAvailability,
           outlets: seedOutlets,
           banners: [],
+          brandColor: "burnt-orange",
         }),
     }),
     { name: "lgc-menu" }

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { useMenuStore, GRADIENTS } from "@/store/menuStore";
+import { useMenuStore, GRADIENTS, BRAND_COLORS } from "@/store/menuStore";
 import { useOrdersStore, ORDER_STATUSES, STATUS_BY_ID, CANCELLED_STATUS } from "@/store/ordersStore";
 import { cn, formatINR } from "@/lib/utils";
 
@@ -588,10 +588,47 @@ function RestaurantTab() {
   const menuLayout = useMenuStore((s) => s.menuLayout);
   const setMenuLayout = useMenuStore((s) => s.setMenuLayout);
 
+  const brandColor = useMenuStore((s) => s.brandColor);
+  const setBrandColor = useMenuStore((s) => s.setBrandColor);
+
   const set = (k) => (e) => updateRestaurant({ [k]: e.target.value });
 
   return (
     <div className="space-y-3">
+      {/* Brand Color */}
+      <Card>
+        <SectionTitle title="Brand Color" subtitle="Choose your signature color — applied across the entire storefront" />
+        <div className="grid grid-cols-2 gap-2">
+          {BRAND_COLORS.map((c) => {
+            const sel = brandColor === c.id;
+            return (
+              <button
+                key={c.id}
+                onClick={() => setBrandColor(c.id)}
+                className={cn(
+                  "flex items-center gap-3 rounded-xl border-2 p-3 text-left transition",
+                  sel
+                    ? "border-foreground bg-foreground/5 shadow-sm"
+                    : "border-border bg-secondary/30 hover:border-foreground/30"
+                )}
+              >
+                <div
+                  className="h-10 w-10 shrink-0 rounded-full ring-2 ring-black/10 ring-offset-2"
+                  style={{ backgroundColor: c.hex }}
+                />
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-bold">{c.name}</p>
+                  {sel && (
+                    <p className="text-[10px] font-semibold text-emerald-600">Active</p>
+                  )}
+                </div>
+                {sel && <Check className="h-4 w-4 shrink-0" />}
+              </button>
+            );
+          })}
+        </div>
+      </Card>
+
       <Card>
         <SectionTitle title="Menu Layout" subtitle="Choose how menu items appear to customers" />
         <div className="grid grid-cols-3 gap-2">
