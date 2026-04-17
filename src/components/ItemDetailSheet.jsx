@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { X, Star, Plus, Minus } from "lucide-react";
+import { X, Plus, Minus } from "lucide-react";
 import { useCartStore } from "@/store/cartStore";
 import { formatINR, cn } from "@/lib/utils";
 
@@ -50,14 +50,26 @@ export default function ItemDetailSheet({ item, outlet, onClose }) {
           <X className="h-3.5 w-3.5" />
         </button>
 
-        {/* Hero emoji */}
+        {/* Hero image / emoji */}
         <div
           className={cn(
-            "mx-3 mt-1 flex h-40 items-center justify-center rounded-xl bg-gradient-to-br",
-            item.gradient
+            "mx-3 mt-1 flex h-40 items-center justify-center overflow-hidden rounded-xl",
+            !item.imageUrl && "bg-gradient-to-br",
+            !item.imageUrl && item.gradient
           )}
         >
-          <span className="text-6xl drop-shadow-md">{item.emoji}</span>
+          {item.imageUrl ? (
+            <img
+              src={item.imageUrl}
+              alt={item.name}
+              className="h-full w-full object-cover"
+              onError={(e) => {
+                e.currentTarget.style.display = "none";
+              }}
+            />
+          ) : (
+            <span className="text-6xl drop-shadow-md">{item.emoji}</span>
+          )}
         </div>
 
         {/* Content */}
@@ -82,10 +94,6 @@ export default function ItemDetailSheet({ item, outlet, onClose }) {
 
           <div className="mt-1 flex items-center gap-2">
             <span className="text-base font-extrabold">{formatINR(item.price)}</span>
-            <span className="flex items-center gap-0.5 rounded-md bg-emerald-50 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700">
-              <Star className="h-2.5 w-2.5 fill-current" />
-              {item.rating}
-            </span>
           </div>
 
           {item.desc && (

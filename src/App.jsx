@@ -20,6 +20,7 @@ const STORE_KEYS = {
 
 export default function App() {
   const brandColor = useMenuStore((s) => s.brandColor);
+  const loadFromDb = useMenuStore((s) => s.loadFromDb);
 
   // Apply brand color CSS variables to :root
   useEffect(() => {
@@ -29,6 +30,12 @@ export default function App() {
     root.setProperty("--primary-foreground", palette.foreground);
     root.setProperty("--ring", palette.ring);
   }, [brandColor]);
+
+  // Fetch live restaurant data from Hasura on every mount.
+  // Latency is logged to console for optimization tuning.
+  useEffect(() => {
+    loadFromDb().catch((e) => console.warn("[hasura] load failed:", e.message));
+  }, [loadFromDb]);
 
   // Cross-tab sync: when another tab writes to localStorage, rehydrate.
   useEffect(() => {

@@ -14,6 +14,9 @@ export default function WelcomeSplash({ onDone }) {
   const [step, setStep] = useState("logo");
   const [logoAtTop, setLogoAtTop] = useState(false);
   const setOrderType = useSessionStore((s) => s.setOrderType);
+  const storefront = useMenuStore((s) => s.storefront);
+  const restaurant = useMenuStore((s) => s.restaurant);
+  const brandName = storefront.brandName || restaurant.name || "Restaurant";
 
   useEffect(() => {
     if (step !== "logo") return;
@@ -39,18 +42,29 @@ export default function WelcomeSplash({ onDone }) {
           )}
           <div
             className={cn(
-              "relative flex items-center justify-center rounded-full bg-white shadow-lg ring-4 ring-primary/20 transition-all duration-500",
+              "relative flex items-center justify-center overflow-hidden rounded-full bg-white shadow-lg ring-4 ring-primary/20 transition-all duration-500",
               step === "logo" && !logoAtTop ? "h-28 w-28" : "h-16 w-16"
             )}
           >
-            <span
-              className={cn(
-                "transition-all duration-500",
-                step === "logo" && !logoAtTop ? "text-5xl animate-bounce-soft" : "text-3xl"
-              )}
-            >
-              ☕
-            </span>
+            {storefront.logoType === "image" && storefront.logoImage ? (
+              <img
+                src={storefront.logoImage}
+                alt={brandName}
+                className={cn(
+                  "h-full w-full object-cover transition-all duration-500",
+                  step === "logo" && !logoAtTop && "animate-bounce-soft"
+                )}
+              />
+            ) : (
+              <span
+                className={cn(
+                  "transition-all duration-500",
+                  step === "logo" && !logoAtTop ? "text-5xl animate-bounce-soft" : "text-3xl"
+                )}
+              >
+                {storefront.logoEmoji || "🍽️"}
+              </span>
+            )}
           </div>
         </div>
         <h1
@@ -59,11 +73,13 @@ export default function WelcomeSplash({ onDone }) {
             step === "logo" && !logoAtTop ? "mt-6 text-3xl" : "mt-3 text-xl"
           )}
         >
-          Le Grand Cafe
+          {brandName}
         </h1>
-        <p className="mt-1 text-xs font-semibold uppercase tracking-[0.25em] text-primary">
-          Continental · Italian · Desserts
-        </p>
+        {restaurant.tagline && (
+          <p className="mt-1 text-xs font-semibold uppercase tracking-[0.25em] text-primary">
+            {restaurant.tagline}
+          </p>
+        )}
         {step === "logo" && !logoAtTop && (
           <div className="mt-6 flex gap-1.5">
             <span className="h-1.5 w-1.5 animate-bounce-soft rounded-full bg-primary" />

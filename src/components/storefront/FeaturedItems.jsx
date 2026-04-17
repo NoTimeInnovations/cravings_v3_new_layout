@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Star, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { useMenuStore } from "@/store/menuStore";
 import { formatINR, cn } from "@/lib/utils";
 
@@ -47,13 +47,23 @@ export default function FeaturedItems({ content }) {
           >
             <div
               className={cn(
-                "relative aspect-square overflow-hidden rounded-2xl bg-gradient-to-br shadow-sm ring-1 ring-black/5 transition-transform duration-300 hover:-translate-y-1",
-                item.gradient
+                "relative aspect-square overflow-hidden rounded-2xl shadow-sm ring-1 ring-black/5 transition-transform duration-300 hover:-translate-y-1",
+                !item.imageUrl && "bg-gradient-to-br",
+                !item.imageUrl && item.gradient
               )}
             >
-              <div className="flex h-full w-full items-center justify-center text-7xl">
-                {item.emoji}
-              </div>
+              {item.imageUrl ? (
+                <img
+                  src={item.imageUrl}
+                  alt={item.name}
+                  loading="lazy"
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-7xl">
+                  {item.emoji}
+                </div>
+              )}
               {item.bestseller && (
                 <span className="absolute left-2 top-2 rounded-full bg-amber-500 px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider text-white shadow">
                   ⭐ Best
@@ -64,10 +74,6 @@ export default function FeaturedItems({ content }) {
             <div className="mt-1 flex items-center gap-2 text-[11px]">
               <span className="font-bold text-foreground">
                 {formatINR(item.price)}
-              </span>
-              <span className="flex items-center gap-0.5 font-semibold text-emerald-700">
-                <Star className="h-2.5 w-2.5 fill-current" />
-                {item.rating}
               </span>
             </div>
           </Link>

@@ -17,11 +17,24 @@ export default function MenuItemPhoto({ item, onTap }) {
       >
         <div
           className={cn(
-            "flex aspect-square items-center justify-center bg-gradient-to-br",
-            item.gradient
+            "flex aspect-square items-center justify-center overflow-hidden",
+            !item.imageUrl && "bg-gradient-to-br",
+            !item.imageUrl && item.gradient
           )}
         >
-          <span className="text-4xl drop-shadow-sm">{item.emoji}</span>
+          {item.imageUrl ? (
+            <img
+              src={item.imageUrl}
+              alt={item.name}
+              loading="lazy"
+              className="h-full w-full object-cover"
+              onError={(e) => {
+                e.currentTarget.style.display = "none";
+              }}
+            />
+          ) : (
+            <span className="text-4xl drop-shadow-sm">{item.emoji}</span>
+          )}
         </div>
 
         {/* Veg mark overlay */}

@@ -1,0 +1,44 @@
+{
+  "description": "Registry of Cloud Skills. Each entry maps a skill name to its details.",
+  "skills": {
+    "list-tables": {
+      "file": "db-list-tables.md",
+      "description": "Lists all tables in the public schema",
+      "created": "2026-03-23",
+      "type": "schema"
+    },
+    "describe-table": {
+      "file": "db-describe-table.md",
+      "description": "Shows columns, types, nullable, defaults for a specific table",
+      "created": "2026-03-23",
+      "type": "schema"
+    },
+    "run-sql": {
+      "file": "db-run-sql.md",
+      "description": "Executes a raw SQL query against the database",
+      "created": "2026-03-23",
+      "type": "custom"
+    },
+    "create-pp-partner": {
+      "file": "scripts/create-pp-partner.sh",
+      "description": "Creates a Petpooja partner in DB and sends onboarding email to Petpooja team",
+      "created": "2026-03-23",
+      "type": "action",
+      "args": "<name> <email> <petpooja_restaurant_id>"
+    },
+    "search-partner": {
+      "file": "scripts/search-partner.sh",
+      "description": "Search partners by name, store name, email, username, or phone",
+      "created": "2026-03-23",
+      "type": "custom",
+      "args": "<search_term>"
+    },
+    "set-username": {
+      "file": "scripts/set-username.sh",
+      "description": "Set or update a partner's username",
+      "created": "2026-03-23",
+      "type": "action",
+      "args": "<partner_id> <new_username>"
+    }
+  }
+}

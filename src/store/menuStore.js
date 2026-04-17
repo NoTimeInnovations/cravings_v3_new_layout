@@ -5,6 +5,7 @@ import {
   categories as seedCategories,
   menu as seedMenu,
 } from "@/data/menu";
+import { fetchRestaurant } from "@/lib/hasura";
 
 const uid = (prefix) =>
   `${prefix}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
@@ -155,9 +156,9 @@ const defaultContentFor = (type) =>
 
 const SEED_STOREFRONT = {
   enabled: true,
-  logoType: "emoji", // 'emoji' | 'image'
-  logoEmoji: "🍕",
-  logoImage: "",
+  logoType: "image", // 'emoji' | 'image'
+  logoEmoji: "🍽️",
+  logoImage: "/legrand-logo.jpg",
   brandName: "", // falls back to restaurant.name when empty
   sections: [
     { id: uid("sec"), type: "hero",         enabled: true, content: {
@@ -231,12 +232,15 @@ const SEED_STOREFRONT = {
 
 export const useMenuStore = create(
   persist(
-    (set) => ({
+    (set, get) => ({
       restaurant: seedRestaurant,
       categories: seedCategories,
       items: seedMenuWithAvailability,
       outlets: seedOutlets,
       menuLayout: 1, // 1 = detailed list, 2 = compact grid, 3 = photo grid
+      heroLayout: "compact", // "compact" | "banner"
+      heroBanners: [], // [{ id, imageUrl }] — overrides restaurant.heroImage when non-empty
+      heroBannerAutoplayMs: 4000, // 0 to disable autoplay
       brandColor: "burnt-orange", // id from BRAND_COLORS
       banners: [
         // type: 'offer' | 'announcement'
@@ -245,9 +249,81 @@ export const useMenuStore = create(
       ],
       storefront: SEED_STOREFRONT,
 
+      // Remote fetch state
+      dbLoading: false,
+      dbError: null,
+      dbLatencyMs: null,
+      dbFetchedAt: null,
+      dbSource: "seed", // 'seed' | 'remote'
+
+      loadFromDb: async (partnerId) => {
+        set({ dbLoading: true, dbError: null });
+        try {
+          const data = await fetchRestaurant(partnerId);
+          set((s) => {
+            const outletIds = s.outlets.map((o) => o.id);
+            const backfillAvailability = Object.fromEntries(
+              outletIds.map((id) => [id, true])
+            );
+            return {
+              restaurant: { ...s.restaurant, ...data.restaurant },
+              categories: data.categories,
+              items: data.items.map((it) => ({
+                ...it,
+                availability: backfillAvailability,
+              })),
+              dbLoading: false,
+              dbError: null,
+              dbLatencyMs: data._latencyMs,
+              dbFetchedAt: data._fetchedAt,
+              dbSource: "remote",
+            };
+          });
+          return data;
+        } catch (err) {
+          set({
+            dbLoading: false,
+            dbError: err.message || "Failed to load",
+            dbSource: get().dbSource === "remote" ? "remote" : "seed",
+          });
+          throw err;
+        }
+      },
+
       // Layout & Brand Color
       setMenuLayout: (layout) => set({ menuLayout: layout }),
+      setHeroLayout: (layout) => set({ heroLayout: layout }),
+      setHeroBannerAutoplayMs: (ms) => set({ heroBannerAutoplayMs: ms }),
       setBrandColor: (colorId) => set({ brandColor: colorId }),
+
+      // Hero banners (multiple images that carousel on the menu page)
+      addHeroBanner: (imageUrl = "") =>
+        set((s) => ({
+          heroBanners: [
+            ...s.heroBanners,
+            { id: uid("hb"), imageUrl },
+          ],
+        })),
+      updateHeroBanner: (id, patch) =>
+        set((s) => ({
+          heroBanners: s.heroBanners.map((b) =>
+            b.id === id ? { ...b, ...patch } : b
+          ),
+        })),
+      removeHeroBanner: (id) =>
+        set((s) => ({
+          heroBanners: s.heroBanners.filter((b) => b.id !== id),
+        })),
+      moveHeroBanner: (id, dir) =>
+        set((s) => {
+          const list = [...s.heroBanners];
+          const idx = list.findIndex((b) => b.id === id);
+          if (idx < 0) return {};
+          const to = dir === "up" ? idx - 1 : idx + 1;
+          if (to < 0 || to >= list.length) return {};
+          [list[idx], list[to]] = [list[to], list[idx]];
+          return { heroBanners: list };
+        }),
 
       // Banners
       addBanner: (banner) =>
@@ -368,6 +444,7 @@ export const useMenuStore = create(
               bestseller: false,
               emoji: "🍽️",
               gradient: GRADIENTS[0],
+              imageUrl: "",
               category: s.categories[0]?.id,
               availability: defaultAvailability(s.outlets.map((o) => o.id)),
               ...item,
@@ -565,6 +642,13 @@ export const useMenuStore = create(
           storefront: SEED_STOREFRONT,
         }),
     }),
-    { name: "lgc-menu" }
+    {
+      name: "lgc-menu",
+      // Don't persist transient fetch state — it's always fresh on reload.
+      partialize: (s) => {
+        const { dbLoading, dbError, ...rest } = s;
+        return rest;
+      },
+    }
   )
 );

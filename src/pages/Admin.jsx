@@ -597,6 +597,16 @@ function RestaurantTab() {
   const updateRestaurant = useMenuStore((s) => s.updateRestaurant);
   const menuLayout = useMenuStore((s) => s.menuLayout);
   const setMenuLayout = useMenuStore((s) => s.setMenuLayout);
+  const heroLayout = useMenuStore((s) => s.heroLayout);
+  const setHeroLayout = useMenuStore((s) => s.setHeroLayout);
+
+  const heroBanners = useMenuStore((s) => s.heroBanners);
+  const addHeroBanner = useMenuStore((s) => s.addHeroBanner);
+  const updateHeroBanner = useMenuStore((s) => s.updateHeroBanner);
+  const removeHeroBanner = useMenuStore((s) => s.removeHeroBanner);
+  const moveHeroBanner = useMenuStore((s) => s.moveHeroBanner);
+  const autoplayMs = useMenuStore((s) => s.heroBannerAutoplayMs);
+  const setAutoplayMs = useMenuStore((s) => s.setHeroBannerAutoplayMs);
 
   const brandColor = useMenuStore((s) => s.brandColor);
   const setBrandColor = useMenuStore((s) => s.setBrandColor);
@@ -605,6 +615,9 @@ function RestaurantTab() {
 
   return (
     <div className="space-y-3">
+      {/* Live DB status */}
+      <DbStatusCard />
+
       {/* Brand Color */}
       <Card>
         <SectionTitle title="Brand Color" subtitle="Choose your signature color — applied across the entire storefront" />
@@ -637,6 +650,175 @@ function RestaurantTab() {
             );
           })}
         </div>
+      </Card>
+
+      <Card>
+        <SectionTitle
+          title="Hero Layout"
+          subtitle="How the restaurant banner & logo appear on the menu page"
+        />
+        <div className="grid grid-cols-2 gap-2">
+          {[
+            {
+              id: "compact",
+              icon: LayoutList,
+              label: "Compact",
+              desc: "Small logo next to name",
+            },
+            {
+              id: "banner",
+              icon: Image,
+              label: "Banner",
+              desc: "Large cover image at top",
+            },
+          ].map((l) => {
+            const Icon = l.icon;
+            const sel = heroLayout === l.id;
+            return (
+              <button
+                key={l.id}
+                onClick={() => setHeroLayout(l.id)}
+                className={cn(
+                  "flex flex-col items-center gap-2 rounded-xl border-2 p-3 transition",
+                  sel
+                    ? "border-primary bg-primary/5"
+                    : "border-border bg-secondary/30 hover:border-primary/40"
+                )}
+              >
+                <div
+                  className={cn(
+                    "flex h-10 w-10 items-center justify-center rounded-xl",
+                    sel ? "bg-primary text-white" : "bg-white text-foreground"
+                  )}
+                >
+                  <Icon className="h-5 w-5" />
+                </div>
+                <div className="text-center">
+                  <p className="text-xs font-extrabold">{l.label}</p>
+                  <p className="text-[10px] text-muted-foreground">{l.desc}</p>
+                </div>
+                {sel && <Check className="h-3.5 w-3.5 text-primary" />}
+              </button>
+            );
+          })}
+        </div>
+      </Card>
+
+      <Card>
+        <div className="flex items-center justify-between">
+          <SectionTitle
+            title="Hero Banners"
+            subtitle={
+              heroBanners.length === 0
+                ? "Empty = uses live store_banner from Hasura"
+                : `${heroBanners.length} banner${heroBanners.length === 1 ? "" : "s"} · auto-scrolls`
+            }
+            inline
+          />
+          <Button size="sm" onClick={() => addHeroBanner()}>
+            <Plus className="h-3.5 w-3.5" /> Add Banner
+          </Button>
+        </div>
+
+        <div className="mt-3 space-y-2.5">
+          {heroBanners.map((b, idx) => (
+            <div
+              key={b.id}
+              className="rounded-xl border bg-secondary/30 p-2.5"
+            >
+              <div className="flex items-start gap-2.5">
+                <div className="h-16 w-24 shrink-0 overflow-hidden rounded-lg bg-secondary ring-1 ring-black/5">
+                  {b.imageUrl ? (
+                    <img
+                      src={b.imageUrl}
+                      alt=""
+                      className="h-full w-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                      }}
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-xl text-muted-foreground">
+                      🖼️
+                    </div>
+                  )}
+                </div>
+                <div className="min-w-0 flex-1 space-y-1.5">
+                  <Input
+                    value={b.imageUrl}
+                    onChange={(e) =>
+                      updateHeroBanner(b.id, { imageUrl: e.target.value })
+                    }
+                    placeholder="https://... (banner image URL)"
+                    className="h-9 text-xs"
+                  />
+                  <div className="flex items-center gap-1">
+                    <button
+                      disabled={idx === 0}
+                      onClick={() => moveHeroBanner(b.id, "up")}
+                      className="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:bg-accent disabled:opacity-30"
+                      title="Move up"
+                    >
+                      <ArrowUp className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      disabled={idx === heroBanners.length - 1}
+                      onClick={() => moveHeroBanner(b.id, "down")}
+                      className="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:bg-accent disabled:opacity-30"
+                      title="Move down"
+                    >
+                      <ArrowDown className="h-3.5 w-3.5" />
+                    </button>
+                    <span className="ml-auto text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                      #{idx + 1}
+                    </span>
+                    <button
+                      onClick={() => {
+                        if (confirm("Delete this banner?"))
+                          removeHeroBanner(b.id);
+                      }}
+                      className="flex h-7 w-7 items-center justify-center rounded-lg text-red-600 hover:bg-red-50"
+                      title="Delete"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+
+          {heroBanners.length === 0 && (
+            <p className="rounded-xl border-2 border-dashed py-5 text-center text-xs text-muted-foreground">
+              No custom banners. Click "Add Banner" to override the default.
+            </p>
+          )}
+        </div>
+
+        {heroBanners.length > 1 && (
+          <div className="mt-3 rounded-xl border bg-secondary/30 p-3">
+            <Field
+              label={
+                autoplayMs > 0
+                  ? `Auto-scroll every ${(autoplayMs / 1000).toFixed(1)}s`
+                  : "Auto-scroll disabled"
+              }
+            >
+              <input
+                type="range"
+                min="0"
+                max="10000"
+                step="500"
+                value={autoplayMs}
+                onChange={(e) => setAutoplayMs(parseInt(e.target.value))}
+                className="w-full accent-primary"
+              />
+            </Field>
+            <p className="text-[10px] text-muted-foreground">
+              Set to 0 (far left) to turn off auto-scroll — users can still swipe.
+            </p>
+          </div>
+        )}
       </Card>
 
       <Card>
@@ -692,22 +874,52 @@ function RestaurantTab() {
       <Card>
         <SectionTitle title="Service Details" />
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Rating">
-            <Input
-              type="number"
-              step="0.1"
-              value={restaurant.rating}
-              onChange={(e) => updateRestaurant({ rating: parseFloat(e.target.value) || 0 })}
-            />
-          </Field>
-          <Field label="Ratings Count">
-            <Input value={restaurant.ratingsCount} onChange={set("ratingsCount")} />
-          </Field>
           <Field label="Delivery Time">
-            <Input value={restaurant.deliveryTime} onChange={set("deliveryTime")} />
+            <Input value={restaurant.deliveryTime || ""} onChange={set("deliveryTime")} />
           </Field>
           <Field label="Distance">
-            <Input value={restaurant.distance} onChange={set("distance")} />
+            <Input value={restaurant.distance || ""} onChange={set("distance")} />
+          </Field>
+        </div>
+      </Card>
+
+      <Card>
+        <SectionTitle title="Contact & Links" subtitle="Shown as icon buttons on the menu" />
+        <div className="space-y-3">
+          <Field label="Phone (for call button)">
+            <Input
+              value={restaurant.phone || ""}
+              onChange={set("phone")}
+              placeholder="+91 98765 43210"
+            />
+          </Field>
+          <Field label="WhatsApp number">
+            <Input
+              value={restaurant.whatsapp || ""}
+              onChange={set("whatsapp")}
+              placeholder="+91 98765 43210 (without + for wa.me)"
+            />
+          </Field>
+          <Field label="Instagram URL">
+            <Input
+              value={restaurant.instagram || ""}
+              onChange={set("instagram")}
+              placeholder="https://instagram.com/..."
+            />
+          </Field>
+          <Field label="Google Maps URL">
+            <Input
+              value={restaurant.mapUrl || ""}
+              onChange={set("mapUrl")}
+              placeholder="https://maps.google.com/... (empty = built from address)"
+            />
+          </Field>
+          <Field label="Google Review URL (for rate button)">
+            <Input
+              value={restaurant.googleReviewUrl || ""}
+              onChange={set("googleReviewUrl")}
+              placeholder="https://g.page/r/..."
+            />
           </Field>
         </div>
       </Card>
@@ -715,7 +927,7 @@ function RestaurantTab() {
       <Card>
         <SectionTitle title="Address" />
         <Field label="Full Address">
-          <Input value={restaurant.address} onChange={set("address")} />
+          <Input value={restaurant.address || ""} onChange={set("address")} />
         </Field>
       </Card>
 
@@ -913,10 +1125,6 @@ function ItemRow({ item, onEdit, onDelete }) {
         </p>
         <div className="mt-1 flex items-center gap-2 text-xs">
           <span className="font-bold">{formatINR(item.price)}</span>
-          <span className="flex items-center gap-0.5 font-semibold text-emerald-700">
-            <Star className="h-2.5 w-2.5 fill-current" />
-            {item.rating}
-          </span>
         </div>
       </div>
       <div className="flex flex-col gap-1">
@@ -963,14 +1171,34 @@ function ItemEditor({ item, onClose }) {
       <div className="flex items-center gap-3 rounded-xl bg-white p-2">
         <div
           className={cn(
-            "flex h-16 w-16 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-4xl ring-1 ring-black/5",
-            item.gradient
+            "flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl text-4xl ring-1 ring-black/5",
+            !item.imageUrl && "bg-gradient-to-br",
+            !item.imageUrl && item.gradient
           )}
         >
-          {item.emoji}
+          {item.imageUrl ? (
+            <img
+              src={item.imageUrl}
+              alt=""
+              className="h-full w-full object-cover"
+              onError={(e) => {
+                e.currentTarget.style.display = "none";
+              }}
+            />
+          ) : (
+            item.emoji
+          )}
         </div>
         <div className="text-xs text-muted-foreground">Live preview</div>
       </div>
+
+      <Field label="Image URL">
+        <Input
+          value={item.imageUrl || ""}
+          onChange={(e) => set({ imageUrl: e.target.value })}
+          placeholder="https://... (leave empty to use emoji)"
+        />
+      </Field>
 
       <Field label="Name">
         <Input value={item.name} onChange={(e) => set({ name: e.target.value })} />
@@ -988,20 +1216,7 @@ function ItemEditor({ item, onClose }) {
             onChange={(e) => set({ price: parseInt(e.target.value) || 0 })}
           />
         </Field>
-        <Field label="Rating">
-          <Input
-            type="number"
-            step="0.1"
-            min="0"
-            max="5"
-            value={item.rating}
-            onChange={(e) => set({ rating: parseFloat(e.target.value) || 0 })}
-          />
-        </Field>
-      </div>
-
-      <div className="grid grid-cols-2 gap-3">
-        <Field label="Emoji">
+        <Field label="Emoji fallback">
           <Input
             value={item.emoji}
             onChange={(e) => set({ emoji: e.target.value })}
@@ -1009,6 +1224,9 @@ function ItemEditor({ item, onClose }) {
             className="text-center text-2xl"
           />
         </Field>
+      </div>
+
+      <div className="grid grid-cols-1 gap-3">
         <Field label="Category">
           <select
             value={item.category}
@@ -1186,6 +1404,113 @@ function OutletsTab() {
           )}
         </div>
       </Card>
+    </div>
+  );
+}
+
+/* ============================ DB Status ============================ */
+function DbStatusCard() {
+  const loading = useMenuStore((s) => s.dbLoading);
+  const error = useMenuStore((s) => s.dbError);
+  const latency = useMenuStore((s) => s.dbLatencyMs);
+  const fetchedAt = useMenuStore((s) => s.dbFetchedAt);
+  const source = useMenuStore((s) => s.dbSource);
+  const items = useMenuStore((s) => s.items);
+  const categories = useMenuStore((s) => s.categories);
+  const loadFromDb = useMenuStore((s) => s.loadFromDb);
+
+  const badgeClass = error
+    ? "bg-red-50 text-red-700 border-red-200"
+    : loading
+    ? "bg-amber-50 text-amber-700 border-amber-200"
+    : source === "remote"
+    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+    : "bg-secondary text-muted-foreground border-border";
+
+  const label = error
+    ? "Offline"
+    : loading
+    ? "Fetching…"
+    : source === "remote"
+    ? "Live"
+    : "Seed";
+
+  const latencyTier = latency == null
+    ? null
+    : latency < 500
+    ? { c: "text-emerald-700", t: "Fast" }
+    : latency < 1200
+    ? { c: "text-amber-700", t: "OK" }
+    : { c: "text-red-700", t: "Slow" };
+
+  return (
+    <Card>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h3 className="font-display text-lg font-extrabold tracking-tight">
+            Live data
+          </h3>
+          <p className="text-xs text-muted-foreground">
+            Pulled from Hasura on every reload
+          </p>
+        </div>
+        <span
+          className={cn(
+            "rounded-full border px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wider",
+            badgeClass
+          )}
+        >
+          {label}
+        </span>
+      </div>
+
+      <div className="mt-3 grid grid-cols-3 gap-2">
+        <Stat label="Items" value={items.length} />
+        <Stat label="Categories" value={categories.length} />
+        <Stat
+          label="Latency"
+          value={latency != null ? `${latency}ms` : "—"}
+          tone={latencyTier?.c}
+          tag={latencyTier?.t}
+        />
+      </div>
+
+      {error && (
+        <p className="mt-3 rounded-lg border border-red-200 bg-red-50 p-2 text-[11px] text-red-700">
+          {error}
+        </p>
+      )}
+
+      <div className="mt-3 flex items-center justify-between gap-2">
+        <p className="text-[11px] text-muted-foreground">
+          {fetchedAt
+            ? `Updated ${new Date(fetchedAt).toLocaleTimeString()}`
+            : "Not fetched yet"}
+        </p>
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={loading}
+          onClick={() => loadFromDb().catch(() => {})}
+        >
+          <RotateCcw className={cn("h-3.5 w-3.5", loading && "animate-spin")} />
+          Refetch
+        </Button>
+      </div>
+    </Card>
+  );
+}
+
+function Stat({ label, value, tone, tag }) {
+  return (
+    <div className="rounded-xl border bg-secondary/30 p-2.5">
+      <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+        {label}
+      </p>
+      <p className={cn("mt-0.5 text-lg font-extrabold", tone)}>{value}</p>
+      {tag && (
+        <p className={cn("text-[10px] font-bold", tone)}>{tag}</p>
+      )}
     </div>
   );
 }

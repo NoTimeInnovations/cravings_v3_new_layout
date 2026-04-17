@@ -14,11 +14,24 @@ export default function MenuItemCompact({ item, onTap }) {
       <button
         onClick={onTap}
         className={cn(
-          "flex h-28 items-center justify-center bg-gradient-to-br transition active:scale-[0.97]",
-          item.gradient
+          "flex h-28 items-center justify-center overflow-hidden transition active:scale-[0.97]",
+          !item.imageUrl && "bg-gradient-to-br",
+          !item.imageUrl && item.gradient
         )}
       >
-        <span className="text-4xl drop-shadow-sm">{item.emoji}</span>
+        {item.imageUrl ? (
+          <img
+            src={item.imageUrl}
+            alt={item.name}
+            loading="lazy"
+            className="h-full w-full object-cover"
+            onError={(e) => {
+              e.currentTarget.style.display = "none";
+            }}
+          />
+        ) : (
+          <span className="text-4xl drop-shadow-sm">{item.emoji}</span>
+        )}
       </button>
 
       {/* Info */}

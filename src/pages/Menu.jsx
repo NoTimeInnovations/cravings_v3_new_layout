@@ -16,6 +16,7 @@ export default function Menu() {
   const menu = useMenuStore((s) => s.items);
   const outlets = useMenuStore((s) => s.outlets);
   const menuLayout = useMenuStore((s) => s.menuLayout);
+  const restaurantName = useMenuStore((s) => s.restaurant.name);
 
   const hasOnboarded = useSessionStore((s) => s.hasOnboarded);
   const selectedOutletId = useSessionStore((s) => s.selectedOutletId);
@@ -81,7 +82,7 @@ export default function Menu() {
                     : "bg-secondary text-foreground hover:bg-accent")
                 }
               >
-                {cat.icon} {cat.name} ({cat.items.length})
+                {cat.name} ({cat.items.length})
               </button>
             ))}
           </div>
@@ -142,7 +143,7 @@ export default function Menu() {
           ))}
 
           <p className="py-4 text-center text-[10px] text-muted-foreground">
-            Le Grand Cafe · FSSAI Lic. No. 10019011000482
+            {restaurantName}
           </p>
         </div>
       </div>

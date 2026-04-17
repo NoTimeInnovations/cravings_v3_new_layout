@@ -1,4 +1,4 @@
-import { Star, Plus, Minus } from "lucide-react";
+import { Plus, Minus } from "lucide-react";
 import { useCartStore } from "@/store/cartStore";
 import { formatINR, cn } from "@/lib/utils";
 
@@ -42,10 +42,6 @@ export default function MenuItem({ item }) {
         </h3>
         <div className="mt-0.5 flex items-center gap-2 text-xs font-bold">
           <span>{formatINR(item.price)}</span>
-          <span className="flex items-center gap-0.5 text-[11px] font-semibold text-emerald-700">
-            <Star className="h-2.5 w-2.5 fill-current" />
-            {item.rating}
-          </span>
         </div>
         <p className="mt-1 line-clamp-2 text-[11px] leading-relaxed text-muted-foreground">
           {item.desc}
@@ -55,11 +51,24 @@ export default function MenuItem({ item }) {
       <div className="relative shrink-0">
         <div
           className={cn(
-            "h-24 w-24 overflow-hidden rounded-xl bg-gradient-to-br shadow-sm ring-1 ring-black/5 flex items-center justify-center",
-            item.gradient
+            "h-24 w-24 overflow-hidden rounded-xl shadow-sm ring-1 ring-black/5 flex items-center justify-center",
+            !item.imageUrl && "bg-gradient-to-br",
+            !item.imageUrl && item.gradient
           )}
         >
-          <span className="text-4xl drop-shadow-sm">{item.emoji}</span>
+          {item.imageUrl ? (
+            <img
+              src={item.imageUrl}
+              alt={item.name}
+              loading="lazy"
+              className="h-full w-full object-cover"
+              onError={(e) => {
+                e.currentTarget.style.display = "none";
+              }}
+            />
+          ) : (
+            <span className="text-4xl drop-shadow-sm">{item.emoji}</span>
+          )}
         </div>
 
         <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2">
