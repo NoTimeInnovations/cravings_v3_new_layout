@@ -5,7 +5,9 @@ import Cart from "./pages/Cart.jsx";
 import Checkout from "./pages/Checkout.jsx";
 import OrderConfirmation from "./pages/OrderConfirmation.jsx";
 import Admin from "./pages/Admin.jsx";
+import Storefront from "./pages/Storefront.jsx";
 import ScrollToTop from "./components/ScrollToTop.jsx";
+import PageTransition from "./components/PageTransition.jsx";
 import { useMenuStore, BRAND_COLORS } from "./store/menuStore.js";
 import { useCartStore } from "./store/cartStore.js";
 import { useOrdersStore } from "./store/ordersStore.js";
@@ -42,11 +44,12 @@ export default function App() {
     <>
       <ScrollToTop />
       <Routes>
-        <Route path="/" element={<Menu />} />
-        <Route path="/cart" element={<Cart />} />
-        <Route path="/checkout" element={<Checkout />} />
-        <Route path="/order-confirmed" element={<OrderConfirmation />} />
-        <Route path="/admin" element={<Admin />} />
+        <Route path="/" element={<PageTransition><Menu /></PageTransition>} />
+        <Route path="/storefront" element={<PageTransition><Storefront /></PageTransition>} />
+        <Route path="/cart" element={<PageTransition variant="right"><Cart /></PageTransition>} />
+        <Route path="/checkout" element={<PageTransition variant="right"><Checkout /></PageTransition>} />
+        <Route path="/order-confirmed" element={<PageTransition variant="celebrate"><OrderConfirmation /></PageTransition>} />
+        <Route path="/admin" element={<PageTransition><Admin /></PageTransition>} />
       </Routes>
     </>
   );

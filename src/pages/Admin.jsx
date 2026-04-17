@@ -1,17 +1,26 @@
 import { useState } from "react";
-import { Store, Tags, UtensilsCrossed, Plus, Trash2, Pencil, Check, X, RotateCcw, Star, ReceiptText, ChevronDown, ChevronUp, MapPin, Phone, Clock, LayoutList, LayoutGrid, Image, Megaphone } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Store, Tags, UtensilsCrossed, Plus, Trash2, Pencil, Check, X, RotateCcw, Star, ReceiptText, ChevronDown, ChevronUp, MapPin, Phone, Clock, LayoutList, LayoutGrid, Image, Megaphone, Layout, ExternalLink, ArrowUp, ArrowDown, Eye, EyeOff, Sparkles } from "lucide-react";
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { Slider } from "@/components/ui/slider";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { useMenuStore, GRADIENTS, BRAND_COLORS } from "@/store/menuStore";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import SectionRenderer from "@/components/storefront/SectionRenderer";
+import { useMenuStore, GRADIENTS, BRAND_COLORS, SECTION_TYPES } from "@/store/menuStore";
 import { useOrdersStore, ORDER_STATUSES, STATUS_BY_ID, CANCELLED_STATUS } from "@/store/ordersStore";
 import { cn, formatINR } from "@/lib/utils";
 
 const TABS = [
   { id: "orders", label: "Orders", icon: ReceiptText },
   { id: "items", label: "Menu", icon: UtensilsCrossed },
+  { id: "storefront", label: "Storefront", icon: Layout },
   { id: "banners", label: "Banners", icon: Megaphone },
   { id: "categories", label: "Categories", icon: Tags },
   { id: "outlets", label: "Outlets", icon: Store },
@@ -73,6 +82,7 @@ export default function Admin() {
 
         <div className="mt-3">
           {tab === "orders" && <OrdersTab />}
+          {tab === "storefront" && <StorefrontTab />}
           {tab === "banners" && <BannersTab />}
           {tab === "restaurant" && <RestaurantTab />}
           {tab === "categories" && <CategoriesTab />}
@@ -1220,6 +1230,895 @@ function FilterPill({ active, onClick, children }) {
     >
       {children}
     </button>
+  );
+}
+
+/* ============================ STOREFRONT TAB (BUILDER) ============================ */
+function StorefrontTab() {
+  const storefront = useMenuStore((s) => s.storefront);
+  const updateStorefront = useMenuStore((s) => s.updateStorefront);
+  const addSection = useMenuStore((s) => s.addSection);
+  const toggleSection = useMenuStore((s) => s.toggleSection);
+  const removeSection = useMenuStore((s) => s.removeSection);
+  const moveSection = useMenuStore((s) => s.moveSection);
+  const resetStorefront = useMenuStore((s) => s.resetStorefront);
+
+  const [editingId, setEditingId] = useState(null);
+  const [addOpen, setAddOpen] = useState(false);
+
+  const editing = storefront.sections.find((s) => s.id === editingId);
+
+  return (
+    <div className="space-y-3">
+      {/* Overview */}
+      <Card>
+        <div className="flex items-start justify-between gap-3">
+          <SectionTitle
+            title="Storefront builder"
+            subtitle="Your public landing page — share on WhatsApp, Google, Instagram"
+            inline
+          />
+          <Button asChild size="sm" variant="outline">
+            <Link to="/storefront" target="_blank">
+              <ExternalLink className="h-3.5 w-3.5" /> Preview
+            </Link>
+          </Button>
+        </div>
+
+        <div className="mt-4 flex items-center gap-3 rounded-xl border bg-secondary/40 p-3.5">
+          <Switch
+            checked={storefront.enabled}
+            onCheckedChange={(v) => updateStorefront({ enabled: v })}
+          />
+          <div className="flex-1">
+            <p className="text-sm font-bold">
+              {storefront.enabled ? "Published" : "Unpublished"}
+            </p>
+            <p className="text-[11px] text-muted-foreground">
+              URL: <span className="font-mono font-semibold">/storefront</span>
+            </p>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              if (confirm("Reset storefront to defaults? All edits will be lost."))
+                resetStorefront();
+            }}
+          >
+            <RotateCcw className="h-3.5 w-3.5" /> Reset
+          </Button>
+        </div>
+      </Card>
+
+      {/* Logo & Brand */}
+      <Card>
+        <SectionTitle title="Logo & brand name" subtitle="Shown in header, footer, and share previews" />
+        <div className="space-y-4">
+          <div>
+            <Label>Brand name</Label>
+            <Input
+              className="mt-1.5"
+              value={storefront.brandName}
+              onChange={(e) => updateStorefront({ brandName: e.target.value })}
+              placeholder="Defaults to your restaurant name"
+            />
+          </div>
+
+          <div>
+            <Label>Logo type</Label>
+            <div className="mt-1.5 grid grid-cols-2 gap-2">
+              {[
+                { id: "emoji", label: "Emoji", icon: "🍕" },
+                { id: "image", label: "Image URL", icon: "🖼️" },
+              ].map((t) => {
+                const sel = storefront.logoType === t.id;
+                return (
+                  <button
+                    key={t.id}
+                    onClick={() => updateStorefront({ logoType: t.id })}
+                    className={cn(
+                      "flex items-center gap-2 rounded-lg border-2 px-3 py-2.5 text-xs font-bold transition",
+                      sel
+                        ? "border-primary bg-primary/5 text-primary"
+                        : "border-border bg-background text-muted-foreground hover:border-primary/40"
+                    )}
+                  >
+                    <span className="text-base">{t.icon}</span>
+                    {t.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {storefront.logoType === "emoji" ? (
+            <div>
+              <Label>Emoji</Label>
+              <Input
+                className="mt-1.5 text-center text-2xl"
+                value={storefront.logoEmoji}
+                onChange={(e) => updateStorefront({ logoEmoji: e.target.value })}
+                maxLength={2}
+              />
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <Label>Logo image URL</Label>
+              <Input
+                className="mt-1.5"
+                value={storefront.logoImage}
+                onChange={(e) => updateStorefront({ logoImage: e.target.value })}
+                placeholder="https://..."
+              />
+              {storefront.logoImage && (
+                <img
+                  src={storefront.logoImage}
+                  alt=""
+                  className="h-14 w-14 rounded-full object-cover ring-2 ring-black/10"
+                />
+              )}
+            </div>
+          )}
+        </div>
+      </Card>
+
+      {/* Sections list */}
+      <Card>
+        <div className="flex items-center justify-between">
+          <SectionTitle
+            title="Sections"
+            subtitle={`${storefront.sections.length} in order · tap to edit`}
+            inline
+          />
+          <Button size="sm" onClick={() => setAddOpen(true)}>
+            <Plus className="h-3.5 w-3.5" /> Add Section
+          </Button>
+        </div>
+
+        <div className="mt-4 space-y-2">
+          {storefront.sections.map((sec, idx) => {
+            const meta = SECTION_TYPES.find((t) => t.id === sec.type);
+            return (
+              <div
+                key={sec.id}
+                className={cn(
+                  "group flex items-center gap-2 rounded-xl border bg-white p-2.5 transition hover:border-primary/40",
+                  !sec.enabled && "opacity-60"
+                )}
+              >
+                <div className="flex flex-col gap-0.5">
+                  <button
+                    disabled={idx === 0}
+                    onClick={() => moveSection(sec.id, "up")}
+                    className="flex h-5 w-5 items-center justify-center rounded text-muted-foreground hover:bg-accent disabled:opacity-30"
+                  >
+                    <ArrowUp className="h-3 w-3" />
+                  </button>
+                  <button
+                    disabled={idx === storefront.sections.length - 1}
+                    onClick={() => moveSection(sec.id, "down")}
+                    className="flex h-5 w-5 items-center justify-center rounded text-muted-foreground hover:bg-accent disabled:opacity-30"
+                  >
+                    <ArrowDown className="h-3 w-3" />
+                  </button>
+                </div>
+
+                <button
+                  onClick={() => setEditingId(sec.id)}
+                  className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                >
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-secondary text-xl">
+                    {meta?.icon || "■"}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-extrabold">
+                      {meta?.label || sec.type}
+                    </p>
+                    <p className="truncate text-[11px] text-muted-foreground">
+                      {sectionSummary(sec)}
+                    </p>
+                  </div>
+                </button>
+
+                <Switch
+                  checked={sec.enabled}
+                  onCheckedChange={() => toggleSection(sec.id)}
+                />
+                <button
+                  onClick={() => setEditingId(sec.id)}
+                  className="flex h-9 w-9 items-center justify-center rounded-lg text-blue-600 hover:bg-blue-50"
+                  title="Edit"
+                >
+                  <Pencil className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => {
+                    if (confirm(`Delete "${meta?.label}" section?`))
+                      removeSection(sec.id);
+                  }}
+                  className="flex h-9 w-9 items-center justify-center rounded-lg text-red-600 hover:bg-red-50"
+                  title="Delete"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+            );
+          })}
+
+          {storefront.sections.length === 0 && (
+            <div className="rounded-xl border-2 border-dashed bg-secondary/30 py-10 text-center">
+              <Layout className="mx-auto h-8 w-8 text-muted-foreground" />
+              <p className="mt-2 text-sm font-bold">No sections yet</p>
+              <p className="text-xs text-muted-foreground">
+                Click "Add Section" to start building.
+              </p>
+            </div>
+          )}
+        </div>
+      </Card>
+
+      {/* Add Section Dialog */}
+      <AddSectionDialog
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+        onAdd={(type) => {
+          addSection(type);
+          setAddOpen(false);
+          // Open editor for newly added section
+          setTimeout(() => {
+            const latest = useMenuStore.getState().storefront.sections.slice(-1)[0];
+            if (latest) setEditingId(latest.id);
+          }, 50);
+        }}
+      />
+
+      {/* Section Editor Dialog */}
+      <SectionEditorDialog
+        section={editing}
+        onClose={() => setEditingId(null)}
+      />
+    </div>
+  );
+}
+
+function sectionSummary(sec) {
+  const c = sec.content || {};
+  switch (sec.type) {
+    case "hero": return c.heading || "(hero)";
+    case "carousel": return `${(c.slides || []).length} slide(s)`;
+    case "imageText": return c.heading || "(image + text)";
+    case "featured": return c.title || "Featured items";
+    case "cta": return c.heading || "(call to action)";
+    case "testimonials": return `${(c.quotes || []).length} review(s)`;
+    case "about": return c.heading || "(about)";
+    case "footer": return c.phone || c.email || "Footer";
+    default: return "";
+  }
+}
+
+/* ================== ADD SECTION DIALOG ================== */
+function AddSectionDialog({ open, onClose, onAdd }) {
+  return (
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Add a section</DialogTitle>
+          <DialogDescription>Pick a block to insert at the end.</DialogDescription>
+        </DialogHeader>
+        <div className="max-h-[60vh] overflow-y-auto p-4">
+          <div className="grid grid-cols-2 gap-2">
+            {SECTION_TYPES.map((t) => (
+              <button
+                key={t.id}
+                onClick={() => onAdd(t.id)}
+                className="flex flex-col items-start gap-2 rounded-xl border bg-white p-3 text-left transition hover:border-primary hover:bg-primary/5"
+              >
+                <span className="text-2xl">{t.icon}</span>
+                <div>
+                  <p className="text-xs font-extrabold">{t.label}</p>
+                  <p className="mt-0.5 text-[10px] leading-snug text-muted-foreground">
+                    {t.desc}
+                  </p>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/* ================== SECTION EDITOR DIALOG ================== */
+function SectionEditorDialog({ section, onClose }) {
+  const meta = section ? SECTION_TYPES.find((t) => t.id === section.type) : null;
+  return (
+    <Dialog open={!!section} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="flex h-[92vh] flex-col gap-0 p-0 sm:max-w-2xl">
+        <DialogHeader className="flex flex-row items-center gap-3">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-lg">
+            {meta?.icon || "■"}
+          </div>
+          <div className="flex-1">
+            <DialogTitle>Edit · {meta?.label}</DialogTitle>
+            <DialogDescription>{meta?.desc}</DialogDescription>
+          </div>
+          <DialogClose className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-accent">
+            <X className="h-4 w-4" />
+          </DialogClose>
+        </DialogHeader>
+
+        {section && (
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-secondary/40">
+            {/* Live preview */}
+            <div className="shrink-0 border-b bg-secondary/50 px-4 py-3">
+              <p className="mb-2 flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground">
+                <Sparkles className="h-3 w-3" />
+                Live preview
+              </p>
+              <div className="max-h-[32vh] overflow-y-auto overflow-x-hidden rounded-xl bg-white shadow-md ring-1 ring-black/10">
+                <div className="pointer-events-none">
+                  <SectionRenderer section={{ ...section, enabled: true }} />
+                </div>
+              </div>
+            </div>
+
+            {/* Editor */}
+            <div className="flex-1 overflow-y-auto bg-white">
+              <div className="mx-auto max-w-xl px-5 py-5">
+                <SectionFormRouter section={section} />
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button variant="outline" onClick={onClose}>Close</Button>
+              <Button onClick={onClose}>Done</Button>
+            </DialogFooter>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/* ================== FORM ROUTER ================== */
+function SectionFormRouter({ section }) {
+  const updateSection = useMenuStore((s) => s.updateSection);
+  const set = (patch) => updateSection(section.id, patch);
+
+  switch (section.type) {
+    case "hero":         return <HeroEditor content={section.content} set={set} />;
+    case "carousel":     return <CarouselEditor section={section} />;
+    case "imageText":    return <ImageTextEditor content={section.content} set={set} />;
+    case "featured":     return <FeaturedEditor content={section.content} set={set} />;
+    case "cta":          return <CTAEditor content={section.content} set={set} />;
+    case "testimonials": return <TestimonialsEditor section={section} />;
+    case "about":        return <AboutEditor content={section.content} set={set} />;
+    case "footer":       return <FooterEditor content={section.content} set={set} />;
+    default: return null;
+  }
+}
+
+/* ================== REUSABLE FIELD WRAPPERS ================== */
+function FieldRow({ label, hint, children }) {
+  return (
+    <div className="space-y-1.5">
+      <Label>{label}</Label>
+      {children}
+      {hint && <p className="text-[11px] text-muted-foreground">{hint}</p>}
+    </div>
+  );
+}
+
+function ImagePreview({ src }) {
+  if (!src) return null;
+  return (
+    <div className="mt-2 overflow-hidden rounded-lg ring-1 ring-black/5">
+      <img src={src} alt="" className="h-32 w-full object-cover" />
+    </div>
+  );
+}
+
+function SubCard({ children, onDelete, title }) {
+  return (
+    <div className="space-y-3 rounded-xl border bg-secondary/30 p-3">
+      <div className="flex items-center justify-between">
+        <p className="text-[11px] font-extrabold uppercase tracking-wider text-muted-foreground">
+          {title}
+        </p>
+        {onDelete && (
+          <button
+            onClick={onDelete}
+            className="flex h-7 w-7 items-center justify-center rounded-lg text-red-600 hover:bg-red-50"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
+        )}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+/* ================== HERO ================== */
+function HeroEditor({ content, set }) {
+  return (
+    <Tabs defaultValue="content" className="space-y-4">
+      <TabsList className="grid w-full grid-cols-3">
+        <TabsTrigger value="content">Content</TabsTrigger>
+        <TabsTrigger value="cta">Buttons</TabsTrigger>
+        <TabsTrigger value="style">Style</TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="content" className="space-y-4">
+        <FieldRow label="Eyebrow label" hint="Small pill shown above the heading">
+          <Input
+            value={content.eyebrow || ""}
+            onChange={(e) => set({ eyebrow: e.target.value })}
+            placeholder="e.g. Best Pizza in Henderson"
+          />
+        </FieldRow>
+        <FieldRow label="Heading">
+          <Textarea
+            value={content.heading || ""}
+            onChange={(e) => set({ heading: e.target.value })}
+            rows={2}
+          />
+        </FieldRow>
+        <FieldRow label="Subheading">
+          <Textarea
+            value={content.subheading || ""}
+            onChange={(e) => set({ subheading: e.target.value })}
+            rows={2}
+          />
+        </FieldRow>
+      </TabsContent>
+
+      <TabsContent value="cta" className="space-y-5">
+        <SubCard title="Primary Button">
+          <FieldRow label="Label">
+            <Input
+              value={content.ctaPrimary?.label || ""}
+              onChange={(e) => set({ ctaPrimary: { ...content.ctaPrimary, label: e.target.value } })}
+            />
+          </FieldRow>
+          <FieldRow label="Link / URL">
+            <Input
+              value={content.ctaPrimary?.link || ""}
+              onChange={(e) => set({ ctaPrimary: { ...content.ctaPrimary, link: e.target.value } })}
+              placeholder="/ or https://..."
+            />
+          </FieldRow>
+        </SubCard>
+        <SubCard title="Secondary Button">
+          <FieldRow label="Label" hint="Leave empty to hide">
+            <Input
+              value={content.ctaSecondary?.label || ""}
+              onChange={(e) => set({ ctaSecondary: { ...content.ctaSecondary, label: e.target.value } })}
+            />
+          </FieldRow>
+          <FieldRow label="Link / URL">
+            <Input
+              value={content.ctaSecondary?.link || ""}
+              onChange={(e) => set({ ctaSecondary: { ...content.ctaSecondary, link: e.target.value } })}
+            />
+          </FieldRow>
+        </SubCard>
+      </TabsContent>
+
+      <TabsContent value="style" className="space-y-4">
+        <FieldRow label="Background image URL">
+          <Input
+            value={content.backgroundImage || ""}
+            onChange={(e) => set({ backgroundImage: e.target.value })}
+            placeholder="https://..."
+          />
+          <ImagePreview src={content.backgroundImage} />
+        </FieldRow>
+        <FieldRow label={`Overlay darkness · ${content.overlayOpacity ?? 55}%`}>
+          <Slider
+            value={[content.overlayOpacity ?? 55]}
+            min={0}
+            max={90}
+            step={5}
+            onValueChange={([v]) => set({ overlayOpacity: v })}
+          />
+        </FieldRow>
+      </TabsContent>
+    </Tabs>
+  );
+}
+
+/* ================== CAROUSEL ================== */
+function CarouselEditor({ section }) {
+  const updateSection = useMenuStore((s) => s.updateSection);
+  const addSlide = useMenuStore((s) => s.addSlide);
+  const updateSlide = useMenuStore((s) => s.updateSlide);
+  const removeSlide = useMenuStore((s) => s.removeSlide);
+  const slides = section.content.slides || [];
+
+  return (
+    <div className="space-y-5">
+      <FieldRow label="Section title (optional)">
+        <Input
+          value={section.content.title || ""}
+          onChange={(e) => updateSection(section.id, { title: e.target.value })}
+          placeholder="e.g. What's new"
+        />
+      </FieldRow>
+
+      <div>
+        <div className="mb-3 flex items-center justify-between">
+          <Label>Slides · {slides.length}</Label>
+          <Button size="sm" variant="outline" onClick={() => addSlide(section.id)}>
+            <Plus className="h-3.5 w-3.5" /> Slide
+          </Button>
+        </div>
+
+        <div className="space-y-3">
+          {slides.map((sl, i) => (
+            <SubCard
+              key={sl.id}
+              title={`Slide ${i + 1}`}
+              onDelete={() => {
+                if (confirm("Delete slide?")) removeSlide(section.id, sl.id);
+              }}
+            >
+              {sl.image && (
+                <img src={sl.image} alt="" className="h-24 w-full rounded-lg object-cover ring-1 ring-black/5" />
+              )}
+              <FieldRow label="Image URL">
+                <Input
+                  value={sl.image}
+                  onChange={(e) => updateSlide(section.id, sl.id, { image: e.target.value })}
+                  placeholder="https://..."
+                />
+              </FieldRow>
+              <FieldRow label="Heading">
+                <Input
+                  value={sl.heading}
+                  onChange={(e) => updateSlide(section.id, sl.id, { heading: e.target.value })}
+                />
+              </FieldRow>
+              <FieldRow label="Description">
+                <Textarea
+                  value={sl.description}
+                  onChange={(e) => updateSlide(section.id, sl.id, { description: e.target.value })}
+                  rows={2}
+                />
+              </FieldRow>
+              <div className="grid grid-cols-2 gap-3">
+                <FieldRow label="CTA label">
+                  <Input
+                    value={sl.ctaLabel || ""}
+                    onChange={(e) => updateSlide(section.id, sl.id, { ctaLabel: e.target.value })}
+                  />
+                </FieldRow>
+                <FieldRow label="CTA link">
+                  <Input
+                    value={sl.ctaLink || ""}
+                    onChange={(e) => updateSlide(section.id, sl.id, { ctaLink: e.target.value })}
+                  />
+                </FieldRow>
+              </div>
+            </SubCard>
+          ))}
+
+          {slides.length === 0 && (
+            <p className="rounded-xl border-2 border-dashed py-8 text-center text-xs text-muted-foreground">
+              No slides yet.
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ================== IMAGE + TEXT ================== */
+function ImageTextEditor({ content, set }) {
+  return (
+    <div className="space-y-4">
+      <FieldRow label="Image URL">
+        <Input
+          value={content.image || ""}
+          onChange={(e) => set({ image: e.target.value })}
+          placeholder="https://..."
+        />
+        <ImagePreview src={content.image} />
+      </FieldRow>
+      <FieldRow label="Heading">
+        <Input value={content.heading || ""} onChange={(e) => set({ heading: e.target.value })} />
+      </FieldRow>
+      <FieldRow label="Description">
+        <Textarea
+          value={content.description || ""}
+          onChange={(e) => set({ description: e.target.value })}
+          rows={5}
+        />
+      </FieldRow>
+      <div className="grid grid-cols-2 gap-3">
+        <FieldRow label="CTA label" hint="Leave empty to hide">
+          <Input value={content.ctaLabel || ""} onChange={(e) => set({ ctaLabel: e.target.value })} />
+        </FieldRow>
+        <FieldRow label="CTA link">
+          <Input value={content.ctaLink || ""} onChange={(e) => set({ ctaLink: e.target.value })} />
+        </FieldRow>
+      </div>
+      <FieldRow label="Image position">
+        <div className="grid grid-cols-2 gap-2">
+          {["top", "bottom"].map((p) => {
+            const sel = (content.imagePosition || "top") === p;
+            return (
+              <button
+                key={p}
+                onClick={() => set({ imagePosition: p })}
+                className={cn(
+                  "rounded-lg border-2 px-3 py-2 text-xs font-bold capitalize transition",
+                  sel
+                    ? "border-primary bg-primary/5 text-primary"
+                    : "border-border bg-background text-muted-foreground hover:border-primary/40"
+                )}
+              >
+                Image {p}
+              </button>
+            );
+          })}
+        </div>
+      </FieldRow>
+    </div>
+  );
+}
+
+/* ================== FEATURED ITEMS ================== */
+function FeaturedEditor({ content, set }) {
+  const items = useMenuStore((s) => s.items);
+  const selected = content.itemIds || [];
+  const toggle = (id) =>
+    set({
+      itemIds: selected.includes(id)
+        ? selected.filter((x) => x !== id)
+        : [...selected, id],
+    });
+
+  return (
+    <div className="space-y-4">
+      <FieldRow label="Title">
+        <Input value={content.title || ""} onChange={(e) => set({ title: e.target.value })} />
+      </FieldRow>
+      <FieldRow label="Subtitle">
+        <Input value={content.subtitle || ""} onChange={(e) => set({ subtitle: e.target.value })} />
+      </FieldRow>
+      <div className="grid grid-cols-2 gap-3">
+        <FieldRow label="CTA label">
+          <Input value={content.ctaLabel || ""} onChange={(e) => set({ ctaLabel: e.target.value })} />
+        </FieldRow>
+        <FieldRow label="CTA link">
+          <Input value={content.ctaLink || ""} onChange={(e) => set({ ctaLink: e.target.value })} />
+        </FieldRow>
+      </div>
+      <div>
+        <Label>
+          Items to feature · {selected.length === 0 ? "auto (bestsellers)" : `${selected.length} selected`}
+        </Label>
+        <div className="mt-2 grid max-h-72 grid-cols-3 gap-1.5 overflow-y-auto rounded-xl border bg-white p-2">
+          {items.map((it) => {
+            const sel = selected.includes(it.id);
+            return (
+              <button
+                key={it.id}
+                onClick={() => toggle(it.id)}
+                className={cn(
+                  "flex flex-col items-stretch gap-1 rounded-lg border-2 p-1.5 text-left transition",
+                  sel
+                    ? "border-primary bg-primary/5"
+                    : "border-transparent bg-white hover:border-primary/30"
+                )}
+              >
+                <div className={cn("flex h-12 w-full items-center justify-center rounded bg-gradient-to-br text-2xl", it.gradient)}>
+                  {it.emoji}
+                </div>
+                <p className="line-clamp-1 text-[10px] font-bold">{it.name}</p>
+              </button>
+            );
+          })}
+        </div>
+        {selected.length > 0 && (
+          <button
+            onClick={() => set({ itemIds: [] })}
+            className="mt-2 text-[11px] font-bold text-muted-foreground hover:text-foreground"
+          >
+            Clear selection
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ================== CTA ================== */
+function CTAEditor({ content, set }) {
+  return (
+    <Tabs defaultValue="content" className="space-y-4">
+      <TabsList className="grid w-full grid-cols-2">
+        <TabsTrigger value="content">Content</TabsTrigger>
+        <TabsTrigger value="style">Style</TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="content" className="space-y-4">
+        <FieldRow label="Heading">
+          <Input value={content.heading || ""} onChange={(e) => set({ heading: e.target.value })} />
+        </FieldRow>
+        <FieldRow label="Description">
+          <Textarea
+            value={content.description || ""}
+            onChange={(e) => set({ description: e.target.value })}
+            rows={4}
+          />
+        </FieldRow>
+        <div className="grid grid-cols-2 gap-3">
+          <FieldRow label="CTA label">
+            <Input value={content.ctaLabel || ""} onChange={(e) => set({ ctaLabel: e.target.value })} />
+          </FieldRow>
+          <FieldRow label="CTA link">
+            <Input value={content.ctaLink || ""} onChange={(e) => set({ ctaLink: e.target.value })} />
+          </FieldRow>
+        </div>
+      </TabsContent>
+
+      <TabsContent value="style" className="space-y-4">
+        <FieldRow label="Background image URL (optional)">
+          <Input value={content.backgroundImage || ""} onChange={(e) => set({ backgroundImage: e.target.value })} />
+          <ImagePreview src={content.backgroundImage} />
+        </FieldRow>
+        <FieldRow label="Color variant">
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              { id: "primary", label: "Brand", preview: "bg-primary" },
+              { id: "dark", label: "Dark", preview: "bg-foreground" },
+              { id: "light", label: "Light", preview: "bg-secondary" },
+            ].map((v) => {
+              const sel = (content.variant || "primary") === v.id;
+              return (
+                <button
+                  key={v.id}
+                  onClick={() => set({ variant: v.id })}
+                  className={cn(
+                    "flex flex-col items-center gap-2 rounded-lg border-2 p-2.5 text-xs font-bold transition",
+                    sel
+                      ? "border-primary bg-primary/5 text-primary"
+                      : "border-border bg-background text-muted-foreground hover:border-primary/40"
+                  )}
+                >
+                  <span className={cn("h-8 w-full rounded", v.preview)} />
+                  {v.label}
+                </button>
+              );
+            })}
+          </div>
+        </FieldRow>
+      </TabsContent>
+    </Tabs>
+  );
+}
+
+/* ================== TESTIMONIALS ================== */
+function TestimonialsEditor({ section }) {
+  const updateSection = useMenuStore((s) => s.updateSection);
+  const addQuote = useMenuStore((s) => s.addQuote);
+  const updateQuote = useMenuStore((s) => s.updateQuote);
+  const removeQuote = useMenuStore((s) => s.removeQuote);
+  const quotes = section.content.quotes || [];
+
+  return (
+    <div className="space-y-5">
+      <FieldRow label="Section title">
+        <Input
+          value={section.content.title || ""}
+          onChange={(e) => updateSection(section.id, { title: e.target.value })}
+        />
+      </FieldRow>
+
+      <div>
+        <div className="mb-3 flex items-center justify-between">
+          <Label>Reviews · {quotes.length}</Label>
+          <Button size="sm" variant="outline" onClick={() => addQuote(section.id)}>
+            <Plus className="h-3.5 w-3.5" /> Review
+          </Button>
+        </div>
+
+        <div className="space-y-3">
+          {quotes.map((q, i) => (
+            <SubCard
+              key={q.id}
+              title={`Review ${i + 1}`}
+              onDelete={() => {
+                if (confirm("Delete review?")) removeQuote(section.id, q.id);
+              }}
+            >
+              <FieldRow label="Reviewer name">
+                <Input
+                  value={q.name}
+                  onChange={(e) => updateQuote(section.id, q.id, { name: e.target.value })}
+                />
+              </FieldRow>
+              <FieldRow label="Review text">
+                <Textarea
+                  value={q.text}
+                  onChange={(e) => updateQuote(section.id, q.id, { text: e.target.value })}
+                  rows={4}
+                />
+              </FieldRow>
+              <FieldRow label={`Rating · ${q.rating || 5}/5`}>
+                <Slider
+                  value={[q.rating || 5]}
+                  min={1}
+                  max={5}
+                  step={1}
+                  onValueChange={([v]) => updateQuote(section.id, q.id, { rating: v })}
+                />
+              </FieldRow>
+            </SubCard>
+          ))}
+
+          {quotes.length === 0 && (
+            <p className="rounded-xl border-2 border-dashed py-8 text-center text-xs text-muted-foreground">
+              No reviews yet.
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ================== ABOUT ================== */
+function AboutEditor({ content, set }) {
+  return (
+    <div className="space-y-4">
+      <FieldRow label="Image URL (optional)">
+        <Input value={content.image || ""} onChange={(e) => set({ image: e.target.value })} />
+        <ImagePreview src={content.image} />
+      </FieldRow>
+      <FieldRow label="Heading">
+        <Input value={content.heading || ""} onChange={(e) => set({ heading: e.target.value })} />
+      </FieldRow>
+      <FieldRow label="Description">
+        <Textarea
+          value={content.description || ""}
+          onChange={(e) => set({ description: e.target.value })}
+          rows={6}
+        />
+      </FieldRow>
+    </div>
+  );
+}
+
+/* ================== FOOTER ================== */
+function FooterEditor({ content, set }) {
+  return (
+    <div className="space-y-4">
+      <FieldRow label="Short description">
+        <Textarea
+          value={content.description || ""}
+          onChange={(e) => set({ description: e.target.value })}
+          rows={3}
+          placeholder="One-line intro shown above contact info"
+        />
+      </FieldRow>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <FieldRow label="Phone">
+          <Input value={content.phone || ""} onChange={(e) => set({ phone: e.target.value })} />
+        </FieldRow>
+        <FieldRow label="Email">
+          <Input value={content.email || ""} onChange={(e) => set({ email: e.target.value })} />
+        </FieldRow>
+      </div>
+      <FieldRow label="Copyright">
+        <Input value={content.copyright || ""} onChange={(e) => set({ copyright: e.target.value })} />
+      </FieldRow>
+    </div>
   );
 }
 

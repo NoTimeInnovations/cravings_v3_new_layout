@@ -80,6 +80,155 @@ const seedMenuWithAvailability = seedMenu.map((it) => ({
   availability: defaultAvailability(seedOutlets.map((o) => o.id)),
 }));
 
+// Storefront section types. Each maps to a renderer component.
+export const SECTION_TYPES = [
+  { id: "hero",         label: "Hero",           icon: "🎯", desc: "Big banner with headline & CTA" },
+  { id: "carousel",     label: "Banner Carousel",icon: "🖼️", desc: "Scrollable image slides" },
+  { id: "imageText",    label: "Image + Text",   icon: "📰", desc: "Story block with image & copy" },
+  { id: "featured",     label: "Featured Items", icon: "⭐", desc: "Highlight menu items" },
+  { id: "cta",          label: "Call to Action", icon: "📣", desc: "Full-width CTA band" },
+  { id: "testimonials", label: "Testimonials",   icon: "💬", desc: "Customer reviews" },
+  { id: "about",        label: "About / Story",  icon: "📖", desc: "Long-form about section" },
+  { id: "footer",       label: "Footer",         icon: "🔗", desc: "Contact, socials, copyright" },
+];
+
+const DEFAULT_CONTENT = {
+  hero: {
+    heading: "Welcome to our restaurant",
+    subheading: "Authentic flavors, crafted fresh daily",
+    eyebrow: "",
+    backgroundImage: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=1200",
+    overlayOpacity: 55,
+    ctaPrimary: { label: "Order Now", link: "/" },
+    ctaSecondary: { label: "View Menu", link: "/" },
+  },
+  carousel: {
+    title: "",
+    slides: [
+      { id: uid("sld"), image: "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800", heading: "Fresh Daily", description: "Baked with love every morning" },
+    ],
+  },
+  imageText: {
+    image: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=900",
+    heading: "Our Story",
+    description: "Share what makes your restaurant special. Talk about your ingredients, your traditions, or the people behind the kitchen.",
+    ctaLabel: "",
+    ctaLink: "",
+    imagePosition: "top",
+  },
+  featured: {
+    title: "Featured",
+    subtitle: "Our most loved dishes",
+    ctaLabel: "View full menu",
+    ctaLink: "/",
+    itemIds: [],
+  },
+  cta: {
+    heading: "Order Online",
+    description: "Order directly to save on fees, get faster service, and support local.",
+    ctaLabel: "Order Now",
+    ctaLink: "/",
+    backgroundImage: "",
+    variant: "primary",
+  },
+  testimonials: {
+    title: "What our guests are saying",
+    quotes: [
+      { id: uid("q"), name: "Gabriel Y.", text: "Excellent pizza! Pepperoni and mushroom pie was proportioned perfectly, crust crispy and full of flavor.", rating: 5 },
+    ],
+  },
+  about: {
+    heading: "About Us",
+    description: "Tell your customers about the craft that goes into every plate — ingredients, history, and people.",
+    image: "",
+  },
+  footer: {
+    description: "",
+    phone: "",
+    email: "",
+    copyright: `© ${new Date().getFullYear()} All rights reserved`,
+  },
+};
+
+const defaultContentFor = (type) =>
+  JSON.parse(JSON.stringify(DEFAULT_CONTENT[type] || {}));
+
+const SEED_STOREFRONT = {
+  enabled: true,
+  logoType: "emoji", // 'emoji' | 'image'
+  logoEmoji: "🍕",
+  logoImage: "",
+  brandName: "", // falls back to restaurant.name when empty
+  sections: [
+    { id: uid("sec"), type: "hero",         enabled: true, content: {
+      heading: "Your Authentic Neighborhood Pizza Restaurant, Since 1928",
+      subheading: "",
+      eyebrow: "Best Pizza in Henderson",
+      backgroundImage: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=1200",
+      overlayOpacity: 55,
+      ctaPrimary: { label: "Order Online", link: "/" },
+      ctaSecondary: { label: "Order with App", link: "/" },
+    }},
+    { id: uid("sec"), type: "imageText",    enabled: true, content: {
+      image: "https://images.unsplash.com/photo-1511689660979-10d2b1aada49?w=900",
+      heading: "Upcoming Events",
+      description: "There's always something cooking at our kitchen. Check our upcoming events including tasting nights, live comedy, and chef specials — unlimited pizza, drinks, and great company.",
+      ctaLabel: "View Events",
+      ctaLink: "/",
+      imagePosition: "top",
+    }},
+    { id: uid("sec"), type: "imageText",    enabled: true, content: {
+      image: "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=900",
+      heading: "Where Flavors Ignite",
+      description: "Experience our rich legacy. Each day in the kitchen we handcraft dough using premium wheat, stretch it skillfully, and bake it to perfection on hearth stones.",
+      ctaLabel: "",
+      ctaLink: "",
+      imagePosition: "top",
+    }},
+    { id: uid("sec"), type: "imageText",    enabled: true, content: {
+      image: "https://images.unsplash.com/photo-1571091718767-18b5b1457add?w=900",
+      heading: "Come Visit Us",
+      description: "Our restaurant is the perfect place for lunch or dinner with friends and family. Drop by and stay for our amazing hospitality and delicious food.",
+      ctaLabel: "Get Directions",
+      ctaLink: "/",
+      imagePosition: "top",
+    }},
+    { id: uid("sec"), type: "featured",     enabled: true, content: {
+      title: "Featured",
+      subtitle: "Our most loved dishes",
+      ctaLabel: "View full menu",
+      ctaLink: "/",
+      itemIds: [],
+    }},
+    { id: uid("sec"), type: "cta",          enabled: true, content: {
+      heading: "Order Online",
+      description: "Order directly to save money on fees, get faster service, and support local businesses.",
+      ctaLabel: "Order Now",
+      ctaLink: "/",
+      backgroundImage: "",
+      variant: "primary",
+    }},
+    { id: uid("sec"), type: "testimonials", enabled: true, content: {
+      title: "What our guests are saying",
+      quotes: [
+        { id: uid("q"), name: "Gabriel Y.",  text: "Excellent pizza! I ordered delivery — a large pepperoni and mushroom pie, and a small pepperoni. Cheese was well proportioned and amazing crust.", rating: 5 },
+        { id: uid("q"), name: "Priya S.",    text: "Best pizza in town. Fresh ingredients, amazing service, and the vibe is so warm.", rating: 5 },
+      ],
+    }},
+    { id: uid("sec"), type: "about",        enabled: true, content: {
+      heading: "Fresh Craft Pizza",
+      description: "We deliver fresh handmade dough stretched daily and baked perfectly to achieve crisp edges and a soft center. Our sauce is made from vine-ripened tomatoes and every topping is chosen for quality.",
+      image: "",
+    }},
+    { id: uid("sec"), type: "footer",       enabled: true, content: {
+      description: "Come for the food, stay for the experience.",
+      phone: "+91 98765 43210",
+      email: "hello@restaurant.com",
+      copyright: `© ${new Date().getFullYear()} All rights reserved`,
+    }},
+  ],
+};
+
 export const useMenuStore = create(
   persist(
     (set) => ({
@@ -94,6 +243,7 @@ export const useMenuStore = create(
         // offers: { id, type:'offer', name, description, code, validDays }
         // announcements: { id, type:'announcement', name, description }
       ],
+      storefront: SEED_STOREFRONT,
 
       // Layout & Brand Color
       setMenuLayout: (layout) => set({ menuLayout: layout }),
@@ -231,6 +381,179 @@ export const useMenuStore = create(
       deleteItem: (id) =>
         set((s) => ({ items: s.items.filter((i) => i.id !== id) })),
 
+      // Storefront
+      updateStorefront: (patch) =>
+        set((s) => ({ storefront: { ...s.storefront, ...patch } })),
+      addSection: (type) =>
+        set((s) => ({
+          storefront: {
+            ...s.storefront,
+            sections: [
+              ...s.storefront.sections,
+              {
+                id: uid("sec"),
+                type,
+                enabled: true,
+                content: defaultContentFor(type),
+              },
+            ],
+          },
+        })),
+      updateSection: (id, contentPatch) =>
+        set((s) => ({
+          storefront: {
+            ...s.storefront,
+            sections: s.storefront.sections.map((sec) =>
+              sec.id === id
+                ? { ...sec, content: { ...sec.content, ...contentPatch } }
+                : sec
+            ),
+          },
+        })),
+      toggleSection: (id) =>
+        set((s) => ({
+          storefront: {
+            ...s.storefront,
+            sections: s.storefront.sections.map((sec) =>
+              sec.id === id ? { ...sec, enabled: !sec.enabled } : sec
+            ),
+          },
+        })),
+      removeSection: (id) =>
+        set((s) => ({
+          storefront: {
+            ...s.storefront,
+            sections: s.storefront.sections.filter((sec) => sec.id !== id),
+          },
+        })),
+      moveSection: (id, dir) =>
+        set((s) => {
+          const list = [...s.storefront.sections];
+          const idx = list.findIndex((x) => x.id === id);
+          if (idx < 0) return {};
+          const to = dir === "up" ? idx - 1 : idx + 1;
+          if (to < 0 || to >= list.length) return {};
+          [list[idx], list[to]] = [list[to], list[idx]];
+          return { storefront: { ...s.storefront, sections: list } };
+        }),
+      addSlide: (sectionId, slide) =>
+        set((s) => ({
+          storefront: {
+            ...s.storefront,
+            sections: s.storefront.sections.map((sec) =>
+              sec.id === sectionId
+                ? {
+                    ...sec,
+                    content: {
+                      ...sec.content,
+                      slides: [
+                        ...(sec.content.slides || []),
+                        { id: uid("sld"), image: "", heading: "", description: "", ...slide },
+                      ],
+                    },
+                  }
+                : sec
+            ),
+          },
+        })),
+      updateSlide: (sectionId, slideId, patch) =>
+        set((s) => ({
+          storefront: {
+            ...s.storefront,
+            sections: s.storefront.sections.map((sec) =>
+              sec.id === sectionId
+                ? {
+                    ...sec,
+                    content: {
+                      ...sec.content,
+                      slides: (sec.content.slides || []).map((sl) =>
+                        sl.id === slideId ? { ...sl, ...patch } : sl
+                      ),
+                    },
+                  }
+                : sec
+            ),
+          },
+        })),
+      removeSlide: (sectionId, slideId) =>
+        set((s) => ({
+          storefront: {
+            ...s.storefront,
+            sections: s.storefront.sections.map((sec) =>
+              sec.id === sectionId
+                ? {
+                    ...sec,
+                    content: {
+                      ...sec.content,
+                      slides: (sec.content.slides || []).filter(
+                        (sl) => sl.id !== slideId
+                      ),
+                    },
+                  }
+                : sec
+            ),
+          },
+        })),
+      addQuote: (sectionId, quote) =>
+        set((s) => ({
+          storefront: {
+            ...s.storefront,
+            sections: s.storefront.sections.map((sec) =>
+              sec.id === sectionId
+                ? {
+                    ...sec,
+                    content: {
+                      ...sec.content,
+                      quotes: [
+                        ...(sec.content.quotes || []),
+                        { id: uid("q"), name: "", text: "", rating: 5, ...quote },
+                      ],
+                    },
+                  }
+                : sec
+            ),
+          },
+        })),
+      updateQuote: (sectionId, quoteId, patch) =>
+        set((s) => ({
+          storefront: {
+            ...s.storefront,
+            sections: s.storefront.sections.map((sec) =>
+              sec.id === sectionId
+                ? {
+                    ...sec,
+                    content: {
+                      ...sec.content,
+                      quotes: (sec.content.quotes || []).map((q) =>
+                        q.id === quoteId ? { ...q, ...patch } : q
+                      ),
+                    },
+                  }
+                : sec
+            ),
+          },
+        })),
+      removeQuote: (sectionId, quoteId) =>
+        set((s) => ({
+          storefront: {
+            ...s.storefront,
+            sections: s.storefront.sections.map((sec) =>
+              sec.id === sectionId
+                ? {
+                    ...sec,
+                    content: {
+                      ...sec.content,
+                      quotes: (sec.content.quotes || []).filter(
+                        (q) => q.id !== quoteId
+                      ),
+                    },
+                  }
+                : sec
+            ),
+          },
+        })),
+      resetStorefront: () => set({ storefront: SEED_STOREFRONT }),
+
       resetAll: () =>
         set({
           restaurant: seedRestaurant,
@@ -239,6 +562,7 @@ export const useMenuStore = create(
           outlets: seedOutlets,
           banners: [],
           brandColor: "burnt-orange",
+          storefront: SEED_STOREFRONT,
         }),
     }),
     { name: "lgc-menu" }
